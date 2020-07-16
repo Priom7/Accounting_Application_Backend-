@@ -7,7 +7,7 @@ const Account = require("../models/account");
 const Group = require("../models/group");
 
 const getAccountById = async (req, res, next) => {
-  const accountId = req.params.pid;
+  const accountId = req.params.aid;
 
   let account;
   try {
@@ -34,37 +34,33 @@ const getAccountById = async (req, res, next) => {
 };
 
 const getAccountsByGroupId = async (req, res, next) => {
-  const groupId = req.params.uid;
-
-  let groupWithAccounts;
+  const groupId = req.params.gid;
+  let accounts;
+  let groups;
   try {
-    groupWithAccounts = await Group.findById(
-      groupId
-    ).populate("inGroup");
+    accounts = await Account.find({ inGroup: groupId });
+    groups = await Group.findOne({ _id: groupId });
   } catch (err) {
     const error = new HttpError(
-      "Fetching Accounts failed, please try again later",
+      "Fetching Accounts failed, please try again later...",
       500
     );
     return next(error);
   }
-
-  if (
-    !groupWithAccounts ||
-    groupWithAccounts.inGroup.length === 0
-  ) {
+  if (!accounts || accounts.length === 0) {
     return next(
       new HttpError(
-        "Could not find Accounts for the provided Group id.",
+        "Could not find a Accounts for the provided Group id.",
         404
       )
     );
   }
 
   res.json({
-    accounts: groupWithAccounts.accounts.map((account) =>
+    accounts: accounts.map((account) =>
       account.toObject({ getters: true })
     ),
+    groups: groups,
   });
 };
 
@@ -81,18 +77,13 @@ const createAccount = async (req, res, next) => {
 
   const { name, inGroup } = req.body;
 
-  const createdAccount = new Account({
-    name,
-    inGroup,
-  });
-
   let group;
   try {
     group = await Group.findById(inGroup);
   } catch (err) {
     console.log(err);
     const error = new HttpError(
-      " here Creating account failed, please try again",
+      " Creating account failed, please try again",
       500
     );
     return next(error);
@@ -107,6 +98,12 @@ const createAccount = async (req, res, next) => {
   }
 
   console.log(group);
+
+  const createdAccount = new Account({
+    name,
+    inGroup,
+    groupName: group.name,
+  });
 
   try {
     const sess = await mongoose.startSession();

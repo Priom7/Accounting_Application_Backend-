@@ -8,6 +8,13 @@ const accountSchema = new Schema({
     type: mongoose.Types.ObjectId,
     ref: "Group",
   },
+  groupName: { type: String },
+  transactions: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "Transaction",
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
 });
 

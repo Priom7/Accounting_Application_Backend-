@@ -1,5 +1,4 @@
 const express = require("express");
-const { check } = require("express-validator");
 
 const accountsControllers = require("../controllers/accounts-controllers");
 
